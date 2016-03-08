@@ -2,23 +2,123 @@
 'use strict';
 
 var dyslexia = require('dyslexia');
+var raf = require('raf');
 var $ = require('jquery');
 
-// create a list of text nodes to be messed up
+// Create a list of text nodes to be messed up
 var textNodes = $('body *').not('iframe').contents().filter(function() {
   return this.nodeType === 3;
 });
 
-// iterate over each text node and mess up their values
-setInterval(function() {
+// Iterate over each text node and mess up their values.
+// Use request animation frame with setTimeout so we scramble words every 100ms (for the dyslexia effect)
+// and scrolling doesn't get stuttery (updates to the DOM only happen when raf allows them to).
+raf(function scramble() {
   for (var i = 0; i < textNodes.length; i++) {
     textNodes[i].nodeValue = dyslexia(textNodes[i].nodeValue, {
       scrambleChance: 10
     });
   }
-}, 50);
 
-},{"dyslexia":2,"jquery":36}],2:[function(require,module,exports){
+  setTimeout(function() {
+    raf(scramble);
+  }, 100);
+})
+
+},{"dyslexia":3,"jquery":37,"raf":38}],2:[function(require,module,exports){
+// shim for using process in browser
+
+var process = module.exports = {};
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = setTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    clearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        setTimeout(drainQueue, 0);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+},{}],3:[function(require,module,exports){
 'use strict';
 
 var randomInt = require('random-int');
@@ -74,7 +174,7 @@ dyslexia.scrambleWord = scrambleWord;
 
 module.exports = dyslexia;
 
-},{"lodash/assignIn":20,"random-int":35}],3:[function(require,module,exports){
+},{"lodash/assignIn":21,"random-int":36}],4:[function(require,module,exports){
 var root = require('./_root');
 
 /** Built-in value references. */
@@ -82,7 +182,7 @@ var Reflect = root.Reflect;
 
 module.exports = Reflect;
 
-},{"./_root":19}],4:[function(require,module,exports){
+},{"./_root":20}],5:[function(require,module,exports){
 /**
  * A faster alternative to `Function#apply`, this function invokes `func`
  * with the `this` binding of `thisArg` and the arguments of `args`.
@@ -106,7 +206,7 @@ function apply(func, thisArg, args) {
 
 module.exports = apply;
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 var eq = require('./eq');
 
 /** Used for built-in method references. */
@@ -135,7 +235,7 @@ function assignValue(object, key, value) {
 
 module.exports = assignValue;
 
-},{"./eq":21}],6:[function(require,module,exports){
+},{"./eq":22}],7:[function(require,module,exports){
 var Reflect = require('./_Reflect'),
     iteratorToArray = require('./_iteratorToArray');
 
@@ -173,7 +273,7 @@ if (enumerate && !propertyIsEnumerable.call({ 'valueOf': 1 }, 'valueOf')) {
 
 module.exports = baseKeysIn;
 
-},{"./_Reflect":3,"./_iteratorToArray":18}],7:[function(require,module,exports){
+},{"./_Reflect":4,"./_iteratorToArray":19}],8:[function(require,module,exports){
 /**
  * The base implementation of `_.property` without support for deep paths.
  *
@@ -189,7 +289,7 @@ function baseProperty(key) {
 
 module.exports = baseProperty;
 
-},{}],8:[function(require,module,exports){
+},{}],9:[function(require,module,exports){
 /**
  * The base implementation of `_.times` without support for iteratee shorthands
  * or max array length checks.
@@ -211,7 +311,7 @@ function baseTimes(n, iteratee) {
 
 module.exports = baseTimes;
 
-},{}],9:[function(require,module,exports){
+},{}],10:[function(require,module,exports){
 /**
  * Checks if `value` is a global object.
  *
@@ -225,7 +325,7 @@ function checkGlobal(value) {
 
 module.exports = checkGlobal;
 
-},{}],10:[function(require,module,exports){
+},{}],11:[function(require,module,exports){
 var copyObjectWith = require('./_copyObjectWith');
 
 /**
@@ -243,7 +343,7 @@ function copyObject(source, props, object) {
 
 module.exports = copyObject;
 
-},{"./_copyObjectWith":11}],11:[function(require,module,exports){
+},{"./_copyObjectWith":12}],12:[function(require,module,exports){
 var assignValue = require('./_assignValue');
 
 /**
@@ -277,7 +377,7 @@ function copyObjectWith(source, props, object, customizer) {
 
 module.exports = copyObjectWith;
 
-},{"./_assignValue":5}],12:[function(require,module,exports){
+},{"./_assignValue":6}],13:[function(require,module,exports){
 var isIterateeCall = require('./_isIterateeCall'),
     rest = require('./rest');
 
@@ -316,7 +416,7 @@ function createAssigner(assigner) {
 
 module.exports = createAssigner;
 
-},{"./_isIterateeCall":16,"./rest":32}],13:[function(require,module,exports){
+},{"./_isIterateeCall":17,"./rest":33}],14:[function(require,module,exports){
 var baseProperty = require('./_baseProperty');
 
 /**
@@ -333,7 +433,7 @@ var getLength = baseProperty('length');
 
 module.exports = getLength;
 
-},{"./_baseProperty":7}],14:[function(require,module,exports){
+},{"./_baseProperty":8}],15:[function(require,module,exports){
 var baseTimes = require('./_baseTimes'),
     isArguments = require('./isArguments'),
     isArray = require('./isArray'),
@@ -359,7 +459,7 @@ function indexKeys(object) {
 
 module.exports = indexKeys;
 
-},{"./_baseTimes":8,"./isArguments":22,"./isArray":23,"./isLength":27,"./isString":30}],15:[function(require,module,exports){
+},{"./_baseTimes":9,"./isArguments":23,"./isArray":24,"./isLength":28,"./isString":31}],16:[function(require,module,exports){
 /** Used as references for various `Number` constants. */
 var MAX_SAFE_INTEGER = 9007199254740991;
 
@@ -382,7 +482,7 @@ function isIndex(value, length) {
 
 module.exports = isIndex;
 
-},{}],16:[function(require,module,exports){
+},{}],17:[function(require,module,exports){
 var eq = require('./eq'),
     isArrayLike = require('./isArrayLike'),
     isIndex = require('./_isIndex'),
@@ -412,7 +512,7 @@ function isIterateeCall(value, index, object) {
 
 module.exports = isIterateeCall;
 
-},{"./_isIndex":15,"./eq":21,"./isArrayLike":24,"./isObject":28}],17:[function(require,module,exports){
+},{"./_isIndex":16,"./eq":22,"./isArrayLike":25,"./isObject":29}],18:[function(require,module,exports){
 /** Used for built-in method references. */
 var objectProto = Object.prototype;
 
@@ -432,7 +532,7 @@ function isPrototype(value) {
 
 module.exports = isPrototype;
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 /**
  * Converts `iterator` to an array.
  *
@@ -452,7 +552,7 @@ function iteratorToArray(iterator) {
 
 module.exports = iteratorToArray;
 
-},{}],19:[function(require,module,exports){
+},{}],20:[function(require,module,exports){
 (function (global){
 var checkGlobal = require('./_checkGlobal');
 
@@ -497,7 +597,7 @@ var root = freeGlobal ||
 module.exports = root;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./_checkGlobal":9}],20:[function(require,module,exports){
+},{"./_checkGlobal":10}],21:[function(require,module,exports){
 var assignValue = require('./_assignValue'),
     copyObject = require('./_copyObject'),
     createAssigner = require('./_createAssigner'),
@@ -555,7 +655,7 @@ var assignIn = createAssigner(function(object, source) {
 
 module.exports = assignIn;
 
-},{"./_assignValue":5,"./_copyObject":10,"./_createAssigner":12,"./_isPrototype":17,"./isArrayLike":24,"./keysIn":31}],21:[function(require,module,exports){
+},{"./_assignValue":6,"./_copyObject":11,"./_createAssigner":13,"./_isPrototype":18,"./isArrayLike":25,"./keysIn":32}],22:[function(require,module,exports){
 /**
  * Performs a [`SameValueZero`](http://ecma-international.org/ecma-262/6.0/#sec-samevaluezero)
  * comparison between two values to determine if they are equivalent.
@@ -592,7 +692,7 @@ function eq(value, other) {
 
 module.exports = eq;
 
-},{}],22:[function(require,module,exports){
+},{}],23:[function(require,module,exports){
 var isArrayLikeObject = require('./isArrayLikeObject');
 
 /** `Object#toString` result references. */
@@ -637,7 +737,7 @@ function isArguments(value) {
 
 module.exports = isArguments;
 
-},{"./isArrayLikeObject":25}],23:[function(require,module,exports){
+},{"./isArrayLikeObject":26}],24:[function(require,module,exports){
 /**
  * Checks if `value` is classified as an `Array` object.
  *
@@ -665,7 +765,7 @@ var isArray = Array.isArray;
 
 module.exports = isArray;
 
-},{}],24:[function(require,module,exports){
+},{}],25:[function(require,module,exports){
 var getLength = require('./_getLength'),
     isFunction = require('./isFunction'),
     isLength = require('./isLength');
@@ -700,7 +800,7 @@ function isArrayLike(value) {
 
 module.exports = isArrayLike;
 
-},{"./_getLength":13,"./isFunction":26,"./isLength":27}],25:[function(require,module,exports){
+},{"./_getLength":14,"./isFunction":27,"./isLength":28}],26:[function(require,module,exports){
 var isArrayLike = require('./isArrayLike'),
     isObjectLike = require('./isObjectLike');
 
@@ -733,7 +833,7 @@ function isArrayLikeObject(value) {
 
 module.exports = isArrayLikeObject;
 
-},{"./isArrayLike":24,"./isObjectLike":29}],26:[function(require,module,exports){
+},{"./isArrayLike":25,"./isObjectLike":30}],27:[function(require,module,exports){
 var isObject = require('./isObject');
 
 /** `Object#toString` result references. */
@@ -775,7 +875,7 @@ function isFunction(value) {
 
 module.exports = isFunction;
 
-},{"./isObject":28}],27:[function(require,module,exports){
+},{"./isObject":29}],28:[function(require,module,exports){
 /** Used as references for various `Number` constants. */
 var MAX_SAFE_INTEGER = 9007199254740991;
 
@@ -810,7 +910,7 @@ function isLength(value) {
 
 module.exports = isLength;
 
-},{}],28:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 /**
  * Checks if `value` is the [language type](https://es5.github.io/#x8) of `Object`.
  * (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
@@ -841,7 +941,7 @@ function isObject(value) {
 
 module.exports = isObject;
 
-},{}],29:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 /**
  * Checks if `value` is object-like. A value is object-like if it's not `null`
  * and has a `typeof` result of "object".
@@ -871,7 +971,7 @@ function isObjectLike(value) {
 
 module.exports = isObjectLike;
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 var isArray = require('./isArray'),
     isObjectLike = require('./isObjectLike');
 
@@ -910,7 +1010,7 @@ function isString(value) {
 
 module.exports = isString;
 
-},{"./isArray":23,"./isObjectLike":29}],31:[function(require,module,exports){
+},{"./isArray":24,"./isObjectLike":30}],32:[function(require,module,exports){
 var baseKeysIn = require('./_baseKeysIn'),
     indexKeys = require('./_indexKeys'),
     isIndex = require('./_isIndex'),
@@ -966,7 +1066,7 @@ function keysIn(object) {
 
 module.exports = keysIn;
 
-},{"./_baseKeysIn":6,"./_indexKeys":14,"./_isIndex":15,"./_isPrototype":17}],32:[function(require,module,exports){
+},{"./_baseKeysIn":7,"./_indexKeys":15,"./_isIndex":16,"./_isPrototype":18}],33:[function(require,module,exports){
 var apply = require('./_apply'),
     toInteger = require('./toInteger');
 
@@ -1029,7 +1129,7 @@ function rest(func, start) {
 
 module.exports = rest;
 
-},{"./_apply":4,"./toInteger":33}],33:[function(require,module,exports){
+},{"./_apply":5,"./toInteger":34}],34:[function(require,module,exports){
 var toNumber = require('./toNumber');
 
 /** Used as references for various `Number` constants. */
@@ -1075,7 +1175,7 @@ function toInteger(value) {
 
 module.exports = toInteger;
 
-},{"./toNumber":34}],34:[function(require,module,exports){
+},{"./toNumber":35}],35:[function(require,module,exports){
 var isFunction = require('./isFunction'),
     isObject = require('./isObject');
 
@@ -1136,7 +1236,7 @@ function toNumber(value) {
 
 module.exports = toNumber;
 
-},{"./isFunction":26,"./isObject":28}],35:[function(require,module,exports){
+},{"./isFunction":27,"./isObject":29}],36:[function(require,module,exports){
 'use strict';
 module.exports = function (min, max) {
 	if (max === undefined) {
@@ -1151,7 +1251,7 @@ module.exports = function (min, max) {
 	return Math.floor(Math.random() * (max - min + 1) + min);
 };
 
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 /*!
  * jQuery JavaScript Library v2.2.1
  * http://jquery.com/
@@ -10984,4 +11084,116 @@ if ( !noGlobal ) {
 return jQuery;
 }));
 
-},{}]},{},[1]);
+},{}],38:[function(require,module,exports){
+(function (global){
+var now = require('performance-now')
+  , root = typeof window === 'undefined' ? global : window
+  , vendors = ['moz', 'webkit']
+  , suffix = 'AnimationFrame'
+  , raf = root['request' + suffix]
+  , caf = root['cancel' + suffix] || root['cancelRequest' + suffix]
+
+for(var i = 0; !raf && i < vendors.length; i++) {
+  raf = root[vendors[i] + 'Request' + suffix]
+  caf = root[vendors[i] + 'Cancel' + suffix]
+      || root[vendors[i] + 'CancelRequest' + suffix]
+}
+
+// Some versions of FF have rAF but not cAF
+if(!raf || !caf) {
+  var last = 0
+    , id = 0
+    , queue = []
+    , frameDuration = 1000 / 60
+
+  raf = function(callback) {
+    if(queue.length === 0) {
+      var _now = now()
+        , next = Math.max(0, frameDuration - (_now - last))
+      last = next + _now
+      setTimeout(function() {
+        var cp = queue.slice(0)
+        // Clear queue here to prevent
+        // callbacks from appending listeners
+        // to the current frame's queue
+        queue.length = 0
+        for(var i = 0; i < cp.length; i++) {
+          if(!cp[i].cancelled) {
+            try{
+              cp[i].callback(last)
+            } catch(e) {
+              setTimeout(function() { throw e }, 0)
+            }
+          }
+        }
+      }, Math.round(next))
+    }
+    queue.push({
+      handle: ++id,
+      callback: callback,
+      cancelled: false
+    })
+    return id
+  }
+
+  caf = function(handle) {
+    for(var i = 0; i < queue.length; i++) {
+      if(queue[i].handle === handle) {
+        queue[i].cancelled = true
+      }
+    }
+  }
+}
+
+module.exports = function(fn) {
+  // Wrap in a new function to prevent
+  // `cancel` potentially being assigned
+  // to the native rAF function
+  return raf.call(root, fn)
+}
+module.exports.cancel = function() {
+  caf.apply(root, arguments)
+}
+module.exports.polyfill = function() {
+  root.requestAnimationFrame = raf
+  root.cancelAnimationFrame = caf
+}
+
+}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"performance-now":39}],39:[function(require,module,exports){
+(function (process){
+// Generated by CoffeeScript 1.7.1
+(function() {
+  var getNanoSeconds, hrtime, loadTime;
+
+  if ((typeof performance !== "undefined" && performance !== null) && performance.now) {
+    module.exports = function() {
+      return performance.now();
+    };
+  } else if ((typeof process !== "undefined" && process !== null) && process.hrtime) {
+    module.exports = function() {
+      return (getNanoSeconds() - loadTime) / 1e6;
+    };
+    hrtime = process.hrtime;
+    getNanoSeconds = function() {
+      var hr;
+      hr = hrtime();
+      return hr[0] * 1e9 + hr[1];
+    };
+    loadTime = getNanoSeconds();
+  } else if (Date.now) {
+    module.exports = function() {
+      return Date.now() - loadTime;
+    };
+    loadTime = Date.now();
+  } else {
+    module.exports = function() {
+      return new Date().getTime() - loadTime;
+    };
+    loadTime = new Date().getTime();
+  }
+
+}).call(this);
+
+}).call(this,require('_process'))
+},{"_process":2}]},{},[1]);

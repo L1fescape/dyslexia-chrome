@@ -2,6 +2,8 @@
 
 > Jumble text to simulate reading with dyslexia.
 
+![dyslexia](dyslexia.png)
+
 ## Setup
 
 ```

@@ -10,7 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "dyslexia": "^1.0.0",
-    "jquery": "^2.2.1"
+    "jquery": "^2.2.1",
+    "raf": "^3.2.0"
   },
   "devDependencies": {
     "browserify": "^13.0.0"
