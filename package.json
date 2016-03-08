@@ -1,0 +1,18 @@
+{
+  "name": "dyslexia-chrome-extension",
+  "version": "1.0.0",
+  "description": "Transform the words in any page so they appear as if you have dyslexia",
+  "main": "index.js",
+  "scripts": {
+    "build": "browserify javascripts/dyslexify.js > javascripts/build.js"
+  },
+  "author": "Andrew Kennedy <andrew@akenn.org>",
+  "license": "ISC",
+  "dependencies": {
+    "dyslexia": "^1.0.0",
+    "jquery": "^2.2.1"
+  },
+  "devDependencies": {
+    "browserify": "^13.0.0"
+  }
+}
