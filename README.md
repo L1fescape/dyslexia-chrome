@@ -7,13 +7,22 @@
 ```
 $ git clone git@github.com:akenn/dyslexia-chrome.git
 $ cd dyslexia-chrome
-$ npm install
-$ npm run build
 ```
 
 ## Use
 
-- Navigate to `chrome://extensions/` in chrom
+- Navigate to `chrome://extensions/` in chrome
 - Click `Load unpacked extension`
 - Select the `dyslexia-chrome` folder
 - Profit!
+
+## Building and Making Changes
+
+```
+$ npm install
+$ npm run build
+```
+
+## Todo
+
+- support toggling off
